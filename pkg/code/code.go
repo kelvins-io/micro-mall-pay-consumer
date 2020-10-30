@@ -11,6 +11,7 @@ const (
 	MerchantExist      = 29000008
 	MerchantNotExist   = 29000009
 	NoticeTypeNotEqual = 29000010
+	ErrDecimalParse    = 29000011
 )
 
 var ErrMap = make(map[int]string)
@@ -25,6 +26,7 @@ func init() {
 		MerchantExist:      "商户认证材料已存在",
 		MerchantNotExist:   "商户未提交材料",
 		NoticeTypeNotEqual: "消息不属于当前消费者或Type不正确",
+		ErrDecimalParse:    "浮点数解析错误",
 	}
 	errcode.RegisterErrMsgDict(dict)
 	for key, _ := range dict {

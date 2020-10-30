@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	StartDeliverTime       = "__STARTDELIVERTIME"
+	StartDeliverTime = "__STARTDELIVERTIME"
 	TransCheckImmunityTime = "__TransCheckT"
-	Keys                   = "KEYS"
-	SHARDING               = "__SHARDINGKEY"
+	Keys = "KEYS"
+	SHARDING = "__SHARDINGKEY"
 )
 
 type MessageResponse struct {
