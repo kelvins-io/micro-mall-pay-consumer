@@ -16,7 +16,6 @@ import (
 	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/shopspring/decimal"
-	"google.golang.org/grpc"
 	"time"
 )
 
@@ -70,9 +69,9 @@ func TradePayConsume(ctx context.Context, body string) error {
 
 	// 从数据查询支付订单
 	wherePayRecord := map[string]interface{}{
-		"tx_id": notice.TxCode,
+		"tx_id": notice.PayId,
 	}
-	recordList, _, err := repository.GetPayRecordList("*", wherePayRecord, nil, nil, 0, 0)
+	recordList, _, err := repository.GetPayRecordList("amount", wherePayRecord, nil, nil, 0, 0)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetPayRecordList err: %v, where: %v", err, wherePayRecord)
 		return fmt.Errorf(errcode.GetErrMsg(code.ErrorServer))
@@ -86,6 +85,7 @@ func TradePayConsume(ctx context.Context, body string) error {
 		}
 		total = util.DecimalAdd(total, amount)
 	}
+
 	// 获取订单
 	serverName = args.RpcServiceMicroMallOrder
 	conn, err = util.GetGrpcClient(serverName)
@@ -105,17 +105,9 @@ func TradePayConsume(ctx context.Context, body string) error {
 		kelvins.ErrLogger.Errorf(ctx, "GetOrderSku %v,err: %v, r: %+v", orderSkuRsp, err, reqOrderSku)
 		return err
 	}
+
 	for i := 0; i < len(orderSkuRsp.OrderList); i++ {
 		row := orderSkuRsp.OrderList[i]
-		// 关联物流消息
-		serverName = args.RpcServiceMicroMallLogistics
-		conn, err = util.GetGrpcClient(serverName)
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-			return err
-		}
-		closeGRPCConn(conn)
-		clientLogistics := logistics_business.NewLogisticsBusinessServiceClient(conn)
 		goods := make([]*logistics_business.GoodsInfo, len(row.Goods))
 		for k := 0; k < len(row.Goods); k++ {
 			g := &logistics_business.GoodsInfo{
@@ -143,7 +135,16 @@ func TradePayConsume(ctx context.Context, body string) error {
 			},
 			Goods: goods,
 		}
+		// 关联物流消息
+		serverName = args.RpcServiceMicroMallLogistics
+		conn, err = util.GetGrpcClient(serverName)
+		if err != nil {
+			kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
+			return err
+		}
+		clientLogistics := logistics_business.NewLogisticsBusinessServiceClient(conn)
 		applyRsp, err := clientLogistics.ApplyLogistics(ctx, &reqLogistics)
+		conn.Close()
 		if err != nil {
 			kelvins.ErrLogger.Errorf(ctx, "ApplyLogistics %v,err: %v, r: %+v", applyRsp, err, reqLogistics)
 			return err
@@ -156,17 +157,13 @@ func TradePayConsume(ctx context.Context, body string) error {
 	}
 
 	// 邮件通知
-	msgNotice := fmt.Sprintf(tradePayEmailTemp, userInfo.Info.UserName, notice.TxCode, total.String())
+	msgNotice := fmt.Sprintf(tradePayEmailTemp, userInfo.Info.UserName, notice.PayId, total.String())
 	err = email.SendEmailNotice(ctx, "565608463@qq.com", vars.AppName, msgNotice)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "SendEmailNotice err：%v, content：%v", err, msgNotice)
 		return err
 	}
 	return nil
-}
-
-func closeGRPCConn(conn *grpc.ClientConn) {
-	defer conn.Close()
 }
 
 func TradePayConsumeErr(ctx context.Context, errMsg, body string) error {
