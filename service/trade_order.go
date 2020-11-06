@@ -41,35 +41,83 @@ func TradePayConsume(ctx context.Context, body string) error {
 		kelvins.ErrLogger.Info(ctx, "businessMsg.Msg: %v Unmarshal err: %v", businessMsg.Msg, err)
 		return err
 	}
-	// 获取用户信息
-	serverName := args.RpcServiceMicroMallUsers
+	// 检查用户身份
+	userInfo, err := checkUserIdentity(ctx, notice)
+	if err != nil {
+		return err
+	}
+	// 更新订单状态
+	err = updateOrderState(ctx, notice)
+	if err != nil {
+		return err
+	}
+	// 处理订单物流
+	err = handleOrderLogistics(ctx, notice)
+	if err != nil {
+		return err
+	}
+	// 通知用户
+	err = noticeUserPayResult(ctx, notice, userInfo)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func updateOrderState(ctx context.Context, notice args.TradePayNotice) error {
+	// 从数据查询支付订单
+	wherePayRecord := map[string]interface{}{
+		"tx_id":     notice.PayId, // 支付ID
+		"pay_state": 3,            // 完成支付
+	}
+	recordList, _, err := repository.GetPayRecordList("out_trade_no", wherePayRecord, nil, nil, 0, 0)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetPayRecordList err: %v, where: %v", err, wherePayRecord)
+		return fmt.Errorf(errcode.GetErrMsg(code.ErrorServer))
+	}
+	serverName := args.RpcServiceMicroMallOrder
 	conn, err := util.GetGrpcClient(serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return err
 	}
 	defer conn.Close()
-	client := users.NewUsersServiceClient(conn)
-	r := users.GetUserInfoRequest{
-		Uid: notice.Uid,
+	entryList := make([]*order_business.OrderStateEntry, len(recordList))
+	for i := 0; i < len(recordList); i++ {
+		stateEntry := &order_business.OrderStateEntry{
+			OrderCode: recordList[i].OutTradeNo,
+			State:     order_business.OrderStateType_ORDER_EFFECTIVE,
+			PayState:  order_business.OrderPayStateType_PAY_SUCCESS,
+		}
+		entryList[i] = stateEntry
 	}
-	userInfo, err := client.GetUserInfo(ctx, &r)
+	client := order_business.NewOrderBusinessServiceClient(conn)
+	updateOrderReq := &order_business.UpdateOrderStateRequest{
+		EntryList: entryList,
+		OperationMeta: &order_business.OperationMeta{
+			OpUid:      notice.Uid,
+			OpIp:       "system",
+			OpPlatform: "ios",
+			OpDevice:   "iphone x a10988",
+		},
+	}
+	updateOrderRsp, err := client.UpdateOrderState(ctx, updateOrderReq)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %+v", serverName, err, r)
+		kelvins.ErrLogger.Errorf(ctx, "UpdateOrderState %v,err: %v", serverName, err)
 		return err
 	}
-	if userInfo.Common.Code != users.RetCode_SUCCESS {
-		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,not ok : %v, rsp: %+v", serverName, err, userInfo)
-		return fmt.Errorf(userInfo.Common.Msg)
+	if updateOrderRsp.Common.Code != order_business.RetCode_SUCCESS {
+		kelvins.ErrLogger.Errorf(ctx, "UpdateOrderState not ok, code: %+v", updateOrderRsp.Common)
+		return fmt.Errorf(updateOrderRsp.Common.Msg)
 	}
-	if userInfo.Info == nil || userInfo.Info.AccountId == "" {
-		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,accountId null : %v, rsp: %+v", serverName, err, userInfo)
-		return fmt.Errorf(errcode.GetErrMsg(code.UserNotExist))
-	}
+	return nil
+}
 
+func noticeUserPayResult(ctx context.Context, notice args.TradePayNotice, userInfo *users.GetUserInfoResponse) error {
 	// 从数据查询支付订单
 	wherePayRecord := map[string]interface{}{
-		"tx_id": notice.PayId,
+		"tx_id":     notice.PayId,
+		"pay_state": 3, // 完成支付
 	}
 	recordList, _, err := repository.GetPayRecordList("amount", wherePayRecord, nil, nil, 0, 0)
 	if err != nil {
@@ -85,10 +133,49 @@ func TradePayConsume(ctx context.Context, body string) error {
 		}
 		total = util.DecimalAdd(total, amount)
 	}
+	// 邮件通知
+	msgNotice := fmt.Sprintf(tradePayEmailTemp, userInfo.Info.UserName, notice.PayId, total.String())
+	err = email.SendEmailNotice(ctx, "565608463@qq.com", vars.AppName, msgNotice)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "SendEmailNotice err：%v, content：%v", err, msgNotice)
+		return err
+	}
+	return nil
+}
 
+func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (*users.GetUserInfoResponse, error) {
+	// 获取用户信息
+	serverName := args.RpcServiceMicroMallUsers
+	conn, err := util.GetGrpcClient(serverName)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
+		return nil, err
+	}
+	defer conn.Close()
+	client := users.NewUsersServiceClient(conn)
+	r := users.GetUserInfoRequest{
+		Uid: notice.Uid,
+	}
+	userInfo, err := client.GetUserInfo(ctx, &r)
+	if err != nil {
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %+v", serverName, err, r)
+		return nil, err
+	}
+	if userInfo.Common.Code != users.RetCode_SUCCESS {
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,not ok : %v, rsp: %+v", serverName, err, userInfo)
+		return nil, fmt.Errorf(userInfo.Common.Msg)
+	}
+	if userInfo.Info == nil || userInfo.Info.AccountId == "" {
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,accountId null : %v, rsp: %+v", serverName, err, userInfo)
+		return nil, fmt.Errorf(errcode.GetErrMsg(code.UserNotExist))
+	}
+	return userInfo, nil
+}
+
+func handleOrderLogistics(ctx context.Context, notice args.TradePayNotice) error {
 	// 获取订单
-	serverName = args.RpcServiceMicroMallOrder
-	conn, err = util.GetGrpcClient(serverName)
+	serverName := args.RpcServiceMicroMallOrder
+	conn, err := util.GetGrpcClient(serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return err
@@ -110,13 +197,13 @@ func TradePayConsume(ctx context.Context, body string) error {
 		row := orderSkuRsp.OrderList[i]
 		goods := make([]*logistics_business.GoodsInfo, len(row.Goods))
 		for k := 0; k < len(row.Goods); k++ {
-			g := &logistics_business.GoodsInfo{
+			good := &logistics_business.GoodsInfo{
 				SkuCode: row.Goods[k].SkuCode,
 				Name:    row.Goods[k].Name,
 				Kind:    row.Goods[k].Name,
 				Count:   row.Goods[k].Amount,
 			}
-			goods[k] = g
+			goods[k] = good
 		}
 		reqLogistics := logistics_business.ApplyLogisticsRequest{
 			OutTradeNo:  row.OrderCode,
@@ -154,14 +241,6 @@ func TradePayConsume(ctx context.Context, body string) error {
 			return err
 		}
 		kelvins.BusinessLogger.Infof(ctx, "ApplyLogistics code: %v", applyRsp.LogisticsCode)
-	}
-
-	// 邮件通知
-	msgNotice := fmt.Sprintf(tradePayEmailTemp, userInfo.Info.UserName, notice.PayId, total.String())
-	err = email.SendEmailNotice(ctx, "565608463@qq.com", vars.AppName, msgNotice)
-	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "SendEmailNotice err：%v, content：%v", err, msgNotice)
-		return err
 	}
 	return nil
 }
