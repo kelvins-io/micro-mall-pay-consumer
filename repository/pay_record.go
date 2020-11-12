@@ -5,21 +5,9 @@ import (
 	"gitee.com/kelvins-io/kelvins"
 )
 
-func GetPayRecordList(selectSql string, where interface{}, orderByDesc, orderByAsc []string, pageSize, pageNum int) ([]mysql.PayRecord, int64, error) {
-	if selectSql == "" {
-		selectSql = "*"
-	}
+func GetPayRecordList(selectSql string, where interface{}) ([]mysql.PayRecord, error) {
 	var result = make([]mysql.PayRecord, 0)
 	var err error
-	var total int64
-	session := kelvins.XORM_DBEngine.Table(mysql.TablePayRecord).
-		Select(selectSql).
-		Where(where).
-		Desc(orderByDesc...).
-		Asc(orderByAsc...)
-	if pageSize > 0 && pageNum >= 1 {
-		session = session.Limit(pageSize, (pageNum-1)*pageSize)
-	}
-	total, err = session.FindAndCount(&result)
-	return result, total, err
+	err = kelvins.XORM_DBEngine.Table(mysql.TablePayRecord).Select(selectSql).Where(where).Find(&result)
+	return result, err
 }
