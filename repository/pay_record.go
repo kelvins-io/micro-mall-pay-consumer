@@ -5,7 +5,7 @@ import (
 	"gitee.com/kelvins-io/kelvins"
 )
 
-func GetPayRecordList(selectSql string, where interface{}) ([]mysql.PayRecord, error) {
+func GetPayRecordList(selectSql string, where map[string]interface{}) ([]mysql.PayRecord, error) {
 	var result = make([]mysql.PayRecord, 0)
 	var err error
 	err = kelvins.XORM_DBEngine.Table(mysql.TablePayRecord).Select(selectSql).Where(where).Find(&result)
