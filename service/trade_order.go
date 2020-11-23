@@ -45,10 +45,10 @@ func TradePayConsume(ctx context.Context, body string) error {
 		return err
 	}
 	// 通知用户
-	err = noticeUserPayResult(ctx, notice, userInfo)
-	if err != nil {
-		return err
-	}
+	//err = noticeUserPayResult(ctx, notice, userInfo)
+	//if err != nil {
+	//	return err
+	//}
 	// 通知订单服务支付结果
 	err = noticeOrderPayCallback(ctx, notice, userInfo)
 	if err != nil {
@@ -86,15 +86,14 @@ func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice, use
 func noticeUserPayResult(ctx context.Context, notice args.TradePayNotice, userInfo *users.GetUserInfoResponse) error {
 	// 从数据查询支付订单
 	wherePayRecord := map[string]interface{}{
-		"tx_id":     notice.PayId,
+		"`tx_id`":   notice.PayId,
 		"pay_state": 3, // 完成支付
 	}
-	recordList, err := repository.GetPayRecordList("amount", wherePayRecord)
+	recordList, err := repository.GetPayRecordList("id,amount", wherePayRecord)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetPayRecordList err: %v, where: %v", err, wherePayRecord)
 		return fmt.Errorf(errcode.GetErrMsg(code.ErrorServer))
 	}
-	// todo  有毒？？
 	fmt.Println("recordList len==", len(recordList))
 	total := decimal.NewFromInt(0)
 	for i := 0; i < len(recordList); i++ {
