@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.63.0
+# cloud.google.com/go v0.61.0
 cloud.google.com/go
 cloud.google.com/go/compute/metadata
 cloud.google.com/go/iam
@@ -24,7 +24,7 @@ gitee.com/kelvins-io/common/proto/common
 gitee.com/kelvins-io/common/proto/google/api
 gitee.com/kelvins-io/common/ptool
 gitee.com/kelvins-io/common/queue
-# gitee.com/kelvins-io/kelvins v1.2.1
+# gitee.com/kelvins-io/kelvins v1.2.2
 gitee.com/kelvins-io/kelvins
 gitee.com/kelvins-io/kelvins/app
 gitee.com/kelvins-io/kelvins/config
@@ -72,7 +72,7 @@ github.com/RichardKnop/machinery/v1/tracing
 github.com/RichardKnop/redsync
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
-# github.com/aliyun/alibaba-cloud-sdk-go v1.61.4
+# github.com/aliyun/alibaba-cloud-sdk-go v1.61.685
 github.com/aliyun/alibaba-cloud-sdk-go/sdk
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth
 github.com/aliyun/alibaba-cloud-sdk-go/sdk/auth/credentials
@@ -86,6 +86,8 @@ github.com/aliyun/alibaba-cloud-sdk-go/sdk/utils
 github.com/aliyun/alibaba-cloud-sdk-go/services/ons
 # github.com/aliyunmq/mq-http-go-sdk v0.0.0-20190911115909-92078b373925
 github.com/aliyunmq/mq-http-go-sdk
+# github.com/andybalholm/brotli v1.0.0
+github.com/andybalholm/brotli
 # github.com/armon/go-radix v1.0.0
 github.com/armon/go-radix
 # github.com/aws/aws-sdk-go v1.33.6
@@ -133,6 +135,8 @@ github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
+# github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
+github.com/bluele/gcache
 # github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
 github.com/bradfitz/gomemcache/memcache
 # github.com/cespare/xxhash v1.1.0
@@ -173,13 +177,13 @@ github.com/go-redis/redis/v8/internal/util
 github.com/go-sql-driver/mysql
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/gogap/errors v0.0.0-20160523102334-149c546090d0
+# github.com/gogap/errors v0.0.0-20200228125012-531a6449b28c
 github.com/gogap/errors
 # github.com/gogap/stack v0.0.0-20150131034635-fef68dddd4f8
 github.com/gogap/stack
 # github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e
 github.com/golang/groupcache/lru
-# github.com/golang/mock v1.4.4
+# github.com/golang/mock v1.4.3
 github.com/golang/mock/gomock
 # github.com/golang/protobuf v1.4.2
 github.com/golang/protobuf/descriptor
@@ -191,6 +195,7 @@ github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
+github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 # github.com/golang/snappy v0.0.1
@@ -198,7 +203,7 @@ github.com/golang/snappy
 # github.com/gomodule/redigo v2.0.0+incompatible
 github.com/gomodule/redigo/internal
 github.com/gomodule/redigo/redis
-# github.com/google/go-cmp v0.5.1
+# github.com/google/go-cmp v0.5.0
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -275,7 +280,7 @@ github.com/qiniu/qmgo/hook
 github.com/qiniu/qmgo/options
 # github.com/robfig/cron/v3 v3.0.1
 github.com/robfig/cron/v3
-# github.com/rs/zerolog v1.18.0
+# github.com/rs/zerolog v1.20.0
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
@@ -287,7 +292,7 @@ github.com/santhosh-tekuri/jsonschema/loader
 github.com/santhosh-tekuri/jsonschema/mediatypes
 # github.com/satori/go.uuid v1.2.0
 github.com/satori/go.uuid
-# github.com/shirou/gopsutil v2.20.1+incompatible
+# github.com/shirou/gopsutil v3.20.10+incompatible
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
 github.com/shirou/gopsutil/mem
@@ -310,15 +315,15 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
-# github.com/tidwall/gjson v1.6.0
+# github.com/tidwall/gjson v1.6.3
 github.com/tidwall/gjson
 # github.com/tidwall/match v1.0.1
 github.com/tidwall/match
-# github.com/tidwall/pretty v1.0.0
+# github.com/tidwall/pretty v1.0.2
 github.com/tidwall/pretty
 # github.com/valyala/bytebufferpool v1.0.0
 github.com/valyala/bytebufferpool
-# github.com/valyala/fasthttp v1.9.0
+# github.com/valyala/fasthttp v1.17.0
 github.com/valyala/fasthttp
 github.com/valyala/fasthttp/fasthttputil
 github.com/valyala/fasthttp/stackless
@@ -326,9 +331,10 @@ github.com/valyala/fasthttp/stackless
 github.com/xdg/scram
 # github.com/xdg/stringprep v1.0.0
 github.com/xdg/stringprep
-# go.elastic.co/apm v1.7.0
+# go.elastic.co/apm v1.9.0
 go.elastic.co/apm
 go.elastic.co/apm/apmconfig
+go.elastic.co/apm/internal/apmcloudutil
 go.elastic.co/apm/internal/apmcontext
 go.elastic.co/apm/internal/apmhostutil
 go.elastic.co/apm/internal/apmhttputil
@@ -346,17 +352,17 @@ go.elastic.co/apm/internal/wildcard
 go.elastic.co/apm/model
 go.elastic.co/apm/stacktrace
 go.elastic.co/apm/transport
-# go.elastic.co/apm/module/apmgorm v1.7.0
+# go.elastic.co/apm/module/apmgorm v1.9.0
 go.elastic.co/apm/module/apmgorm
-# go.elastic.co/apm/module/apmgrpc v1.7.0
+# go.elastic.co/apm/module/apmgrpc v1.9.0
 go.elastic.co/apm/module/apmgrpc
-# go.elastic.co/apm/module/apmhttp v1.7.0
+# go.elastic.co/apm/module/apmhttp v1.9.0
 go.elastic.co/apm/module/apmhttp
-# go.elastic.co/apm/module/apmredigo v1.7.0
+# go.elastic.co/apm/module/apmredigo v1.9.0
 go.elastic.co/apm/module/apmredigo
-# go.elastic.co/apm/module/apmsql v1.7.0
+# go.elastic.co/apm/module/apmsql v1.9.0
 go.elastic.co/apm/module/apmsql
-# go.elastic.co/fastjson v1.0.0
+# go.elastic.co/fastjson v1.1.0
 go.elastic.co/fastjson
 # go.mongodb.org/mongo-driver v1.4.0
 go.mongodb.org/mongo-driver/bson
@@ -431,7 +437,7 @@ golang.org/x/lint/golint
 # golang.org/x/mod v0.3.0
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20200707034311-ab3426394381
+# golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http/httpguts
@@ -450,7 +456,7 @@ golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
+# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -462,7 +468,7 @@ golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 golang.org/x/time/rate
-# golang.org/x/tools v0.0.0-20200806022845-90696ccdc692
+# golang.org/x/tools v0.0.0-20200715235423-130c9f19d3fe
 golang.org/x/tools/cmd/goimports
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
@@ -475,10 +481,10 @@ golang.org/x/tools/internal/fastwalk
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
-# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/api v0.30.0
+# google.golang.org/api v0.29.0
 google.golang.org/api/internal
 google.golang.org/api/iterator
 google.golang.org/api/option
@@ -497,7 +503,7 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
+# google.golang.org/genproto v0.0.0-20200715011427-11fb19a81f2c
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/iam/v1
