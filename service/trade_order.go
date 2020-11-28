@@ -39,8 +39,19 @@ func TradePayConsume(ctx context.Context, body string) error {
 		kelvins.ErrLogger.Info(ctx, "businessMsg.Msg: %v Unmarshal err: %v", businessMsg.Msg, err)
 		return err
 	}
+	payRecordWhere := map[string]interface{}{
+		"tx_id": notice.PayId,
+	}
+	payRecordList, err := repository.GetPayRecordList("id,tx_id,out_trade_no", payRecordWhere)
+	if err != nil {
+		kelvins.ErrLogger.Info(ctx, "GetPayRecordList err: %v, where: %+v", err, payRecordWhere)
+		return err
+	}
+	if len(payRecordList) == 0 {
+		// 查询不到数据
+	}
 	// 检查用户身份
-	userInfo, err := checkUserIdentity(ctx, notice)
+	err = checkUserIdentity(ctx, notice)
 	if err != nil {
 		return err
 	}
@@ -50,14 +61,14 @@ func TradePayConsume(ctx context.Context, body string) error {
 	//	return err
 	//}
 	// 通知订单服务支付结果
-	err = noticeOrderPayCallback(ctx, notice, userInfo)
+	err = noticeOrderPayCallback(ctx, notice)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice, userInfo *users.GetUserInfoResponse) error {
+func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice) error {
 	serverName := args.RpcServiceMicroMallOrder
 	conn, err := util.GetGrpcClient(serverName)
 	if err != nil {
@@ -115,33 +126,33 @@ func noticeUserPayResult(ctx context.Context, notice args.TradePayNotice, userIn
 	return nil
 }
 
-func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (*users.GetUserInfoResponse, error) {
+func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) error {
 	// 获取用户信息
 	serverName := args.RpcServiceMicroMallUsers
 	conn, err := util.GetGrpcClient(serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-		return nil, err
+		return err
 	}
 	defer conn.Close()
 	client := users.NewUsersServiceClient(conn)
-	r := users.GetUserInfoRequest{
-		Uid: notice.Uid,
+	r := users.GetUserAccountIdRequest{
+		UidList: []int64{notice.Uid},
 	}
-	userInfo, err := client.GetUserInfo(ctx, &r)
+	userInfo, err := client.GetUserAccountId(ctx, &r)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %+v", serverName, err, r)
-		return nil, err
+		return err
 	}
 	if userInfo.Common.Code != users.RetCode_SUCCESS {
 		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,not ok : %v, rsp: %+v", serverName, err, userInfo)
-		return nil, fmt.Errorf(userInfo.Common.Msg)
+		return fmt.Errorf(userInfo.Common.Msg)
 	}
-	if userInfo.Info == nil || userInfo.Info.AccountId == "" {
+	if userInfo.InfoList[0].AccountId == "" {
 		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,accountId null : %v, rsp: %+v", serverName, err, userInfo)
-		return nil, fmt.Errorf(errcode.GetErrMsg(code.UserNotExist))
+		return fmt.Errorf(errcode.GetErrMsg(code.UserNotExist))
 	}
-	return userInfo, nil
+	return nil
 }
 
 func TradePayConsumeErr(ctx context.Context, errMsg, body string) error {
