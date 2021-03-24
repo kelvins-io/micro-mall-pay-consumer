@@ -19,5 +19,4 @@ require (
 	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0
-	xorm.io/xorm v1.0.3 // indirect
 )
