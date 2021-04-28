@@ -1,7 +1,7 @@
 package app
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"gitee.com/kelvins-io/common/env"
 	"gitee.com/kelvins-io/common/event"
@@ -13,6 +13,7 @@ import (
 	"gitee.com/kelvins-io/kelvins/internal/service/slb/etcdconfig"
 	"gitee.com/kelvins-io/kelvins/internal/setup"
 	"gitee.com/kelvins-io/kelvins/internal/util"
+	"gitee.com/kelvins-io/kelvins/util/kprocess"
 	"strconv"
 )
 
@@ -20,15 +21,23 @@ func RunHTTPApplication(application *kelvins.HTTPApplication) {
 	if application.Name == "" {
 		logging.Fatal("Application name can't not be empty")
 	}
-
-	flag.Parse()
-	application.Port = *port
-	application.LoggerRootPath = *loggerPath
 	application.Type = kelvins.AppTypeHttp
 
 	err := runHTTP(application)
 	if err != nil {
 		logging.Fatalf("App.RunHTTP err: %v", err)
+	}
+	<-kprocess.Exit()
+
+	appPrepareForceExit()
+	// Wait for connections to drain.
+	err = application.HttpServer.Shutdown(context.Background())
+	if err != nil {
+		logging.Fatalf("App.HttpServer Shutdown err: %v", err)
+	}
+	err = appShutdown(application.Application)
+	if err != nil {
+		logging.Fatalf("App.appShutdown err: %v", err)
 	}
 }
 
@@ -150,12 +159,18 @@ func runHTTP(httpApp *kelvins.HTTPApplication) error {
 
 	// 8. start server
 	logging.Infof("Start http server listen %s", kelvins.ServerSetting.EndPoint)
-	err = httpApp.HttpServer.ListenAndServe()
+	ln, err := kprocess.Listen("tcp", kelvins.ServerSetting.EndPoint, kelvins.PIDFile)
 	if err != nil {
-		return fmt.Errorf("HttpServer serve err: %v", err)
+		return fmt.Errorf("TCP Listen err: %v", err)
 	}
+	go func() {
+		err = httpApp.HttpServer.Serve(ln)
+		if err != nil {
+			logging.Fatalf("HttpServer serve err: %v", err)
+		}
+	}()
 
-	return nil
+	return err
 }
 
 func setupHTTPVars(httpApp *kelvins.HTTPApplication) error {

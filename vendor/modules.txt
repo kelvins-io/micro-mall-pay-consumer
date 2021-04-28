@@ -9,7 +9,7 @@ cloud.google.com/go/pubsub
 cloud.google.com/go/pubsub/apiv1
 cloud.google.com/go/pubsub/internal/distribution
 cloud.google.com/go/pubsub/internal/scheduler
-# gitee.com/kelvins-io/common v1.0.2
+# gitee.com/kelvins-io/common v1.0.4
 gitee.com/kelvins-io/common/conf
 gitee.com/kelvins-io/common/convert
 gitee.com/kelvins-io/common/env
@@ -24,7 +24,7 @@ gitee.com/kelvins-io/common/proto/common
 gitee.com/kelvins-io/common/proto/google/api
 gitee.com/kelvins-io/common/ptool
 gitee.com/kelvins-io/common/queue
-# gitee.com/kelvins-io/kelvins v1.2.2
+# gitee.com/kelvins-io/kelvins v1.2.7
 gitee.com/kelvins-io/kelvins
 gitee.com/kelvins-io/kelvins/app
 gitee.com/kelvins-io/kelvins/config
@@ -38,7 +38,9 @@ gitee.com/kelvins-io/kelvins/internal/setup
 gitee.com/kelvins-io/kelvins/internal/util
 gitee.com/kelvins-io/kelvins/setup
 gitee.com/kelvins-io/kelvins/util/client_conn
+gitee.com/kelvins-io/kelvins/util/goroutine
 gitee.com/kelvins-io/kelvins/util/grpc_interceptor
+gitee.com/kelvins-io/kelvins/util/kprocess
 # gitee.com/kelvins-io/service-config v1.0.0
 gitee.com/kelvins-io/service-config/configcenter
 gitee.com/kelvins-io/service-config/configcenter/read
@@ -143,6 +145,8 @@ github.com/bradfitz/gomemcache/memcache
 github.com/cespare/xxhash
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/cloudflare/tableflip v1.2.2
+github.com/cloudflare/tableflip
 # github.com/coreos/etcd v3.3.22+incompatible
 github.com/coreos/etcd/client
 github.com/coreos/etcd/pkg/pathutil
@@ -456,7 +460,7 @@ golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f
+# golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows

@@ -5,26 +5,40 @@ import (
 	"fmt"
 	"gitee.com/kelvins-io/common/log"
 	"gitee.com/kelvins-io/kelvins"
+	"gitee.com/kelvins-io/kelvins/internal/logging"
 	"gitee.com/kelvins-io/kelvins/setup"
+	"gitee.com/kelvins-io/kelvins/util/goroutine"
+	"os"
+	"time"
+)
+
+const (
+	DefaultLoggerRootPath = "./logs"
+	DefaultLoggerLevel    = "debug"
 )
 
 var (
-	port       = flag.Int64("p", 0, "Set server port.")
-	loggerPath = flag.String("logger_path", "", "Set Logger Root Path.")
+	flagLoggerLevel = flag.String("logger_level", "", "Set Logger Level.")
+	flagLoggerPath  = flag.String("logger_path", "", "Set Logger Root Path.")
 )
 
-// initApplication initalizes application.
 func initApplication(application *kelvins.Application) error {
-	const DefaultLoggerRootPath = "./logs"
-	const DefaultLoggerLevel = "debug"
+	flag.Parse()
+	kelvins.ServerName = application.Name
 
 	rootPath := DefaultLoggerRootPath
 	if application.LoggerRootPath != "" {
 		rootPath = application.LoggerRootPath
 	}
+	if *flagLoggerPath != "" {
+		rootPath = *flagLoggerPath
+	}
 	loggerLevel := DefaultLoggerLevel
 	if application.LoggerLevel != "" {
 		loggerLevel = application.LoggerLevel
+	}
+	if *flagLoggerLevel != "" {
+		loggerLevel = *flagLoggerLevel
 	}
 
 	err := log.InitGlobalConfig(rootPath, loggerLevel, application.Name)
@@ -61,6 +75,17 @@ func setupCommonVars(application *kelvins.Application) error {
 		}
 	}
 
+	if kelvins.GPoolSetting != nil && kelvins.GPoolSetting.JobChanLen > 0 && kelvins.GPoolSetting.WorkerNum > 0 {
+		kelvins.GPool = goroutine.NewPool(kelvins.GPoolSetting.WorkerNum, kelvins.GPoolSetting.JobChanLen)
+	}
+
+	if kelvins.ServerSetting != nil && kelvins.ServerSetting.PIDFile != "" {
+		kelvins.PIDFile = kelvins.ServerSetting.PIDFile
+	} else {
+		wd, _ := os.Getwd()
+		kelvins.PIDFile = fmt.Sprintf("%s/%s.pid", wd, kelvins.ServerName)
+	}
+
 	kelvins.FrameworkLogger, err = log.GetCustomLogger("framework", "framework")
 	if err != nil {
 		return err
@@ -82,4 +107,24 @@ func setupCommonVars(application *kelvins.Application) error {
 	}
 
 	return nil
+}
+
+func appShutdown(application *kelvins.Application) error {
+	if application.StopFunc != nil {
+		err := application.StopFunc()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func appPrepareForceExit() {
+	// Make sure to set a deadline on exiting the process
+	// after upg.Exit() is closed. No new upgrades can be
+	// performed if the parent doesn't exit.
+	time.AfterFunc(30*time.Second, func() {
+		logging.Infof("App Graceful shutdown timed out")
+		os.Exit(1)
+	})
 }

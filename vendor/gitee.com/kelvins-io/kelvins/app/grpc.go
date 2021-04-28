@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"gitee.com/kelvins-io/common/env"
 	"gitee.com/kelvins-io/common/event"
@@ -15,9 +14,9 @@ import (
 	"gitee.com/kelvins-io/kelvins/internal/setup"
 	"gitee.com/kelvins-io/kelvins/internal/util"
 	"gitee.com/kelvins-io/kelvins/util/grpc_interceptor"
+	"gitee.com/kelvins-io/kelvins/util/kprocess"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"google.golang.org/grpc"
-	"net"
 	"strconv"
 )
 
@@ -26,15 +25,24 @@ func RunGRPCApplication(application *kelvins.GRPCApplication) {
 	if application.Name == "" {
 		logging.Fatal("Application name can't not be empty")
 	}
-
-	flag.Parse()
-	application.Port = *port
-	application.LoggerRootPath = *loggerPath
 	application.Type = kelvins.AppTypeGrpc
 
 	err := runGRPC(application)
 	if err != nil {
 		logging.Fatalf("App.RunGRPC err: %v", err)
+	}
+	<-kprocess.Exit()
+
+	appPrepareForceExit()
+	// Wait for connections to drain.
+	err = application.HttpServer.Shutdown(context.Background())
+	if err != nil {
+		logging.Fatalf("App HttpServer.Shutdown err: %v", err)
+	}
+	application.GRPCServer.Stop()
+	err = appShutdown(application.Application)
+	if err != nil {
+		logging.Fatalf("App.appShutdown err: %v", err)
 	}
 }
 
@@ -169,16 +177,18 @@ func runGRPC(grpcApp *kelvins.GRPCApplication) error {
 
 	// 8. start server
 	logging.Infof("Start http server listen %s", kelvins.ServerSetting.EndPoint)
-	conn, err := net.Listen("tcp", kelvins.ServerSetting.EndPoint)
+	ln, err := kprocess.Listen("tcp", kelvins.ServerSetting.EndPoint, kelvins.PIDFile)
 	if err != nil {
 		return fmt.Errorf("TCP Listen err: %v", err)
 	}
-	err = grpcApp.HttpServer.Serve(conn)
-	if err != nil {
-		return fmt.Errorf("HttpServer serve err: %v", err)
-	}
+	go func() {
+		err = grpcApp.HttpServer.Serve(ln)
+		if err != nil {
+			logging.Fatalf("HttpServer serve err: %v", err)
+		}
+	}()
 
-	return nil
+	return err
 }
 
 // setupGRPCVars ...

@@ -2,13 +2,13 @@ package app
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"gitee.com/kelvins-io/common/event"
 	"gitee.com/kelvins-io/common/log"
 	"gitee.com/kelvins-io/kelvins"
 	"gitee.com/kelvins-io/kelvins/internal/config"
 	"gitee.com/kelvins-io/kelvins/internal/logging"
+	"gitee.com/kelvins-io/kelvins/util/kprocess"
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 	"time"
@@ -19,20 +19,27 @@ func RunCronApplication(application *kelvins.CronApplication) {
 	if application.Name == "" {
 		logging.Fatal("Application name can't not be empty")
 	}
-
-	flag.Parse()
-	application.LoggerRootPath = *loggerPath
 	application.Type = kelvins.AppTypeCron
+
 	err := prepareCron(application)
 	if err != nil {
 		logging.Fatalf("prepareCron err: %v", err)
 	}
 
+	// kprocess listen
+	_, err = kprocess.Listen("", "", kelvins.PIDFile)
+	if err != nil {
+		logging.Fatalf("kprocess listen err: %v", err)
+	}
 	logging.Info("Start cron")
 	application.Cron.Start()
-	timer := time.NewTimer(time.Second * 10)
-	for range timer.C {
-		timer.Reset(time.Second * 10)
+	<-kprocess.Exit()
+
+	appPrepareForceExit()
+	application.Cron.Stop()
+	err = appShutdown(application.Application)
+	if err != nil {
+		logging.Fatalf("App.appShutdown err: %v", err)
 	}
 }
 
