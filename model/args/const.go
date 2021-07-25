@@ -18,6 +18,10 @@ const (
 )
 
 const (
+	TradePayEmailTemp = "微商城已经收到【%v】您的订单 %v 已经完成支付，本次您共消费：%s元，欢迎你随时关注订单状态。"
+)
+
+const (
 	TaskNameTradePayNotice    = "task_trade_pay_notice"
 	TaskNameTradePayNoticeErr = "task_trade_pay_notice_err"
 )
