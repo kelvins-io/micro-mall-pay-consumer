@@ -80,7 +80,7 @@ func TradePayConsume(ctx context.Context, body string) error {
 
 func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice) error {
 	serverName := args.RpcServiceMicroMallOrder
-	conn, err := util.GetGrpcClient(serverName)
+	conn, err := util.GetGrpcClient(ctx, serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return err
@@ -131,7 +131,7 @@ func noticeUserPayResult(ctx context.Context, userName string, recordList []mysq
 func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userName string, err error) {
 	// 获取用户信息
 	serverName := args.RpcServiceMicroMallUsers
-	conn, err := util.GetGrpcClient(serverName)
+	conn, err := util.GetGrpcClient(ctx, serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return "", err
