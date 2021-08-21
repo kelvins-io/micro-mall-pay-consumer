@@ -85,7 +85,7 @@ func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice) err
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return err
 	}
-	defer conn.Close()
+	//defer conn.Close()
 	client := order_business.NewOrderBusinessServiceClient(conn)
 	req := order_business.OrderTradeNoticeRequest{
 		Uid:         notice.Uid,
@@ -136,7 +136,7 @@ func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userNam
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
 		return "", err
 	}
-	defer conn.Close()
+	//defer conn.Close()
 	client := users.NewUsersServiceClient(conn)
 	r := users.CheckUserStateRequest{
 		UidList: []int64{notice.Uid},
