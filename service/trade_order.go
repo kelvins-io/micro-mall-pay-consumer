@@ -94,11 +94,11 @@ func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice) err
 	}
 	orderTradeNoticeRsp, err := client.OrderTradeNotice(ctx, &req)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %+v", serverName, err, req)
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %v", serverName, err, json.MarshalToStringNoError(req))
 		return err
 	}
 	if orderTradeNoticeRsp.Common.Code != order_business.RetCode_SUCCESS {
-		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, rsp: %+v", serverName, err, orderTradeNoticeRsp)
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo req: %v, rsp: %v", json.MarshalToStringNoError(req), json.MarshalToStringNoError(orderTradeNoticeRsp))
 		return fmt.Errorf(errcode.GetErrMsg(code.ErrorServer))
 	}
 	return nil
@@ -143,13 +143,13 @@ func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userNam
 	}
 	userInfo, err := client.CheckUserState(ctx, &r)
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "CheckUserState %v,err: %v, r: %+v", serverName, err, notice.Uid)
+		kelvins.ErrLogger.Errorf(ctx, "CheckUserState %v,err: %v, r: %v", serverName, err, notice.Uid)
 		return "", err
 	}
 	if userInfo.Common.Code == users.RetCode_SUCCESS {
 		userInfoRsp, err := client.GetUserInfo(ctx, &users.GetUserInfoRequest{Uid: notice.Uid})
 		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetUserInfo %v,err: %v, r: %+v", serverName, err, notice.Uid)
+			kelvins.ErrLogger.Errorf(ctx, "GetUserInfo req: %v, resp: %v", notice.Uid, json.MarshalToStringNoError(userInfo))
 			return "", err
 		}
 		if userInfoRsp.Common.Code == users.RetCode_SUCCESS {
@@ -158,7 +158,7 @@ func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userNam
 		return "", fmt.Errorf(userInfo.Common.Msg)
 	}
 
-	kelvins.ErrLogger.Errorf(ctx, "GetUserInfo  err:%v, rsp: %+v", err, userInfo)
+	kelvins.ErrLogger.Errorf(ctx, "GetUserInfo  req:%v, rsp: %v", notice.Uid, json.MarshalToStringNoError(userInfo))
 	return "", fmt.Errorf(userInfo.Common.Msg)
 }
 
