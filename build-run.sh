@@ -11,4 +11,4 @@ cp -n ./etc/app.ini.example ./etc/app.ini
 mkdir -p logs
 
 echo 开始运行micro-mall-pay-consumer
-./micro-mall-pay-consumer -s start
+nohup ./micro-mall-pay-consumer -s start >nohup.out  2>&1  &
