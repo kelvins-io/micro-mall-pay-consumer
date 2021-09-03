@@ -8,7 +8,6 @@ echo 开始构建
 go build -o micro-mall-pay-consumer main.go
 
 cp -n ./etc/app.ini.example ./etc/app.ini
-mkdir -p logs
 
 echo 开始运行micro-mall-pay-consumer
 nohup ./micro-mall-pay-consumer -s start >nohup.out  2>&1  &
