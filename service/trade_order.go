@@ -120,7 +120,7 @@ func noticeUserPayResult(ctx context.Context, userName string, recordList []mysq
 	// 邮件通知
 	emailNotice := fmt.Sprintf(args.TradePayEmailTemp, userName, orderCode.String(), total.String())
 	for _, receiver := range vars.EmailNoticeSetting.Receivers {
-		err := email.SendEmailNotice(ctx, receiver, vars.AppName, emailNotice)
+		err := email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
 		if err != nil {
 			kelvins.ErrLogger.Info(ctx, "noticeUserPayResult SendEmailNotice err, emailNotice: %v", emailNotice)
 		}
