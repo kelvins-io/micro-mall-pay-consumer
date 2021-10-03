@@ -33,9 +33,9 @@ func TradePayConsume(ctx context.Context, body string) error {
 		return fmt.Errorf(errcode.GetErrMsg(code.NoticeTypeNotEqual))
 	}
 	var notice args.TradePayNotice
-	err = json.Unmarshal(businessMsg.Msg, &notice)
+	err = json.Unmarshal(businessMsg.Content, &notice)
 	if err != nil {
-		kelvins.ErrLogger.Info(ctx, "businessMsg.Msg: %v Unmarshal err: %v", businessMsg.Msg, err)
+		kelvins.ErrLogger.Info(ctx, "businessMsg.Msg: %v Unmarshal err: %v", businessMsg.Content, err)
 		return err
 	}
 	payRecordWhere := map[string]interface{}{
