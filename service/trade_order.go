@@ -55,8 +55,7 @@ func TradePayConsume(ctx context.Context, body string) error {
 	}
 
 	go func() {
-		// 检查用户身份
-		userName, err := checkUserIdentity(ctx, notice)
+		userName, err := getUserName(ctx, notice)
 		if err != nil {
 			return
 		}
@@ -131,7 +130,7 @@ func noticeUserPayResult(ctx context.Context, userName string, recordList []mysq
 	return nil
 }
 
-func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userName string, err error) {
+func getUserName(ctx context.Context, notice args.TradePayNotice) (userName string, err error) {
 	// 获取用户信息
 	serverName := args.RpcServiceMicroMallUsers
 	conn, err := util.GetGrpcClient(ctx, serverName)
@@ -141,28 +140,15 @@ func checkUserIdentity(ctx context.Context, notice args.TradePayNotice) (userNam
 	}
 	//defer conn.Close()
 	client := users.NewUsersServiceClient(conn)
-	r := users.CheckUserStateRequest{
-		UidList: []int64{notice.Uid},
-	}
-	userInfo, err := client.CheckUserState(ctx, &r)
+	userInfoRsp, err := client.GetUserInfo(ctx, &users.GetUserInfoRequest{Uid: notice.Uid})
 	if err != nil {
-		kelvins.ErrLogger.Errorf(ctx, "CheckUserState %v,err: %v, r: %v", serverName, err, notice.Uid)
+		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo req: %v, resp: %v", notice.Uid, json.MarshalToStringNoError(userInfoRsp))
 		return "", err
 	}
-	if userInfo.Common.Code == users.RetCode_SUCCESS {
-		userInfoRsp, err := client.GetUserInfo(ctx, &users.GetUserInfoRequest{Uid: notice.Uid})
-		if err != nil {
-			kelvins.ErrLogger.Errorf(ctx, "GetUserInfo req: %v, resp: %v", notice.Uid, json.MarshalToStringNoError(userInfo))
-			return "", err
-		}
-		if userInfoRsp.Common.Code == users.RetCode_SUCCESS {
-			return userInfoRsp.Info.UserName, nil
-		}
-		return "", fmt.Errorf(userInfo.Common.Msg)
+	if userInfoRsp.Common.Code == users.RetCode_SUCCESS {
+		return userInfoRsp.Info.UserName, nil
 	}
-
-	kelvins.ErrLogger.Errorf(ctx, "GetUserInfo  req:%v, rsp: %v", notice.Uid, json.MarshalToStringNoError(userInfo))
-	return "", fmt.Errorf(userInfo.Common.Msg)
+	return "", fmt.Errorf("获取用户信息错误: %v", userInfoRsp.Common.Code)
 }
 
 func TradePayConsumeErr(ctx context.Context, errMsg, body string) error {
