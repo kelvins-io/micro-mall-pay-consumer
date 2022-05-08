@@ -3,6 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"gitee.com/cristiane/micro-mall-pay-consumer/model/args"
 	"gitee.com/cristiane/micro-mall-pay-consumer/model/mysql"
 	"gitee.com/cristiane/micro-mall-pay-consumer/pkg/code"
@@ -11,13 +14,10 @@ import (
 	"gitee.com/cristiane/micro-mall-pay-consumer/proto/micro_mall_order_proto/order_business"
 	"gitee.com/cristiane/micro-mall-pay-consumer/proto/micro_mall_users_proto/users"
 	"gitee.com/cristiane/micro-mall-pay-consumer/repository"
-	"gitee.com/cristiane/micro-mall-pay-consumer/vars"
 	"gitee.com/kelvins-io/common/errcode"
 	"gitee.com/kelvins-io/common/json"
 	"gitee.com/kelvins-io/kelvins"
 	"github.com/shopspring/decimal"
-	"strings"
-	"time"
 )
 
 func TradePayConsume(ctx context.Context, body string) error {
@@ -55,12 +55,12 @@ func TradePayConsume(ctx context.Context, body string) error {
 	}
 
 	go func() {
-		userName, err := getUserName(ctx, notice)
-		if err != nil {
+		userInfo, err := getUserInfo(ctx, notice)
+		if err != nil || userInfo == nil {
 			return
 		}
 		// 通知用户
-		err = noticeUserPayResult(ctx, userName, payRecordList)
+		err = noticeUserPayResult(ctx, userInfo, payRecordList)
 		if err != nil {
 			return
 		}
@@ -103,7 +103,10 @@ func noticeOrderPayCallback(ctx context.Context, notice args.TradePayNotice) err
 	return nil
 }
 
-func noticeUserPayResult(ctx context.Context, userName string, recordList []mysql.PayRecord) error {
+func noticeUserPayResult(ctx context.Context, userInfo *users.UserInfo, recordList []mysql.PayRecord) error {
+	if userInfo == nil || userInfo.Email == "" {
+		return nil
+	}
 	total := decimal.NewFromInt(0)
 	var orderCode strings.Builder
 	for i := 0; i < len(recordList); i++ {
@@ -117,38 +120,37 @@ func noticeUserPayResult(ctx context.Context, userName string, recordList []mysq
 	}
 
 	// 邮件通知
-	emailNotice := fmt.Sprintf(args.TradePayEmailTemp, userName, orderCode.String(), total.String())
-	if vars.EmailNoticeSetting != nil && vars.EmailNoticeSetting.Receivers != nil {
-		for _, receiver := range vars.EmailNoticeSetting.Receivers {
-			err := email.SendEmailNotice(ctx, receiver, kelvins.AppName, emailNotice)
-			if err != nil {
-				kelvins.ErrLogger.Info(ctx, "noticeUserPayResult SendEmailNotice err, emailNotice: %v", emailNotice)
-			}
+	emailNotice := fmt.Sprintf(args.TradePayEmailTemp, userInfo.UserName, orderCode.String(), total.String())
+	if userInfo.Email != "" {
+		err := email.SendEmailNotice(ctx, userInfo.Email, kelvins.AppName, emailNotice)
+		if err != nil {
+			kelvins.ErrLogger.Info(ctx, "noticeUserPayResult SendEmailNotice err, emailNotice: %v", emailNotice)
 		}
 	}
 
 	return nil
 }
 
-func getUserName(ctx context.Context, notice args.TradePayNotice) (userName string, err error) {
+func getUserInfo(ctx context.Context, notice args.TradePayNotice) (userInfo *users.UserInfo, err error) {
 	// 获取用户信息
 	serverName := args.RpcServiceMicroMallUsers
 	conn, err := util.GetGrpcClient(ctx, serverName)
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetGrpcClient %v,err: %v", serverName, err)
-		return "", err
+		return
 	}
-	//defer conn.Close()
 	client := users.NewUsersServiceClient(conn)
 	userInfoRsp, err := client.GetUserInfo(ctx, &users.GetUserInfoRequest{Uid: notice.Uid})
 	if err != nil {
 		kelvins.ErrLogger.Errorf(ctx, "GetUserInfo req: %v, resp: %v", notice.Uid, json.MarshalToStringNoError(userInfoRsp))
-		return "", err
+		return
 	}
 	if userInfoRsp.Common.Code == users.RetCode_SUCCESS {
-		return userInfoRsp.Info.UserName, nil
+		userInfo = userInfoRsp.GetInfo()
+		return
 	}
-	return "", fmt.Errorf("获取用户信息错误: %v", userInfoRsp.Common.Code)
+
+	return
 }
 
 func TradePayConsumeErr(ctx context.Context, errMsg, body string) error {
